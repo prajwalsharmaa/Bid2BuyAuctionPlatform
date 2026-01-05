@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage My Account - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .account-container {
+            display: flex;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .account-sidebar {
+            width: 250px;
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .account-sidebar h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        .account-sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .account-sidebar li {
+            margin-bottom: 0.5rem;
+        }
+        .account-sidebar a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #555;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .account-sidebar a:hover {
+            background-color: #f0f0f0;
+        }
+        .account-sidebar a.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .account-content {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .account-content h2 {
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+        }
+        .welcome-message {
+            padding: 1rem;
+            background-color: #e8f4f8;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+        }
+        .welcome-message h3 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+        }
+        .account-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .account-option-card {
+            padding: 1.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .account-option-card:hover {
+            border-color: #3498db;
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+        }
+        .account-option-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+        }
+        .account-option-card p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li th:if="${#authentication != null and #authentication.authorities.?[authority == 'ROLE_ADMIN'].size() > 0}"><a href="/admin/dashboard">Admin</a></li>
+                <li th:if="${user != null and user.approved}">
+                    <div class="mode-toggle-nav">
+                        <form th:action="@{/dashboard/toggle-buyer}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${user.buyerMode ? 'btn-nav-active' : ''}">
+                                Buyer
+                            </button>
+                        </form>
+                        <form th:action="@{/dashboard/toggle-seller}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${user.sellerMode ? 'btn-nav-active' : ''}">
+                                Seller
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="account-container">
+                <div class="account-sidebar">
+                    <h3>Hello, <span th:text="${user.fullName}"></span></h3>
+                    <ul>
+                        <li><strong>Manage My Account</strong></li>
+                        <li><a href="/account/profile" class="active">My Profile</a></li>
+                        <li><a href="/account/addresses">Address Book</a></li>
+                    </ul>
+                </div>
+                
+                <div class="account-content">
+                    <h2>Manage My Account</h2>
+                    <div class="welcome-message">
+                        <h3>Welcome to your account management center</h3>
+                        <p>Manage your profile information and delivery addresses from here.</p>
+                    </div>
+                    
+                    <div class="account-options">
+                        <div class="account-option-card">
+                            <h4>My Profile</h4>
+                            <p>Edit your personal information, profile picture, and contact details</p>
+                            <a href="/account/profile" class="btn btn-primary">Edit Profile</a>
+                        </div>
+                        
+                        <div class="account-option-card">
+                            <h4>Address Book</h4>
+                            <p>Manage your delivery addresses for shipping and billing</p>
+                            <a href="/account/addresses" class="btn btn-primary">Manage Addresses</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

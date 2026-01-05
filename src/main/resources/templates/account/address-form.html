@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${addressId != null ? 'Edit Address' : 'Add New Address'} + ' - Bid2Buy'">Address Form - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li th:if="${#authentication != null and #authentication.authorities.?[authority == 'ROLE_ADMIN'].size() > 0}"><a href="/admin/dashboard">Admin</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="form-container">
+                <h2 th:text="${addressId != null ? 'Edit Address' : 'Add New Address'}"></h2>
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+                
+                <form th:action="${addressId != null ? '/account/addresses/' + addressId + '/edit' : '/account/addresses/new'}" 
+                      th:object="${addressDTO}" method="post" class="form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    
+                    <div class="form-group">
+                        <label for="fullName">Full Name *</label>
+                        <input type="text" id="fullName" th:field="*{fullName}" class="form-input" required>
+                        <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addressLine">Address Line *</label>
+                        <textarea id="addressLine" th:field="*{addressLine}" class="form-input" required></textarea>
+                        <span th:if="${#fields.hasErrors('addressLine')}" th:errors="*{addressLine}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" th:field="*{city}" class="form-input">
+                        <span th:if="${#fields.hasErrors('city')}" th:errors="*{city}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="state">State/Province</label>
+                        <input type="text" id="state" th:field="*{state}" class="form-input">
+                        <span th:if="${#fields.hasErrors('state')}" th:errors="*{state}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="postalCode">Postal Code</label>
+                        <input type="text" id="postalCode" th:field="*{postalCode}" class="form-input">
+                        <span th:if="${#fields.hasErrors('postalCode')}" th:errors="*{postalCode}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input type="text" id="country" th:field="*{country}" class="form-input">
+                        <span th:if="${#fields.hasErrors('country')}" th:errors="*{country}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number</label>
+                        <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" 
+                               pattern="[0-9]{10,15}" class="form-input">
+                        <span th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addressType">Address Type</label>
+                        <select id="addressType" th:field="*{addressType}" class="form-select">
+                            <option value="HOME">Home</option>
+                            <option value="OFFICE">Office</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" th:field="*{isDefaultShipping}"> Set as default shipping address
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" th:field="*{isDefaultBilling}"> Set as default billing address
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" 
+                            th:text="${addressId != null ? 'Update Address' : 'Add Address'}"></button>
+                    <a href="/account/addresses" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Auctions - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li th:if="${currentUser != null and currentUser.approved}">
+                    <div class="mode-toggle-nav">
+                        <form th:action="@{/dashboard/toggle-buyer}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.buyerMode ? 'btn-nav-active' : ''}">
+                                Buyer
+                            </button>
+                        </form>
+                        <form th:action="@{/dashboard/toggle-seller}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.sellerMode ? 'btn-nav-active' : ''}">
+                                Seller
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <h1>My Auctions</h1>
+            <a href="/auction/create" class="btn btn-primary">Create New Auction</a>
+            
+            <div class="auction-grid" th:if="${auctions != null and !auctions.isEmpty()}">
+                <div class="auction-card" th:each="auction : ${auctions}">
+                    <a th:href="@{/auction/{id}(id=${auction.id})}">
+                        <img th:if="${auction.image != null}" 
+                             th:src="@{'/uploads/auction/' + ${auction.image}}" 
+                             alt="Product Image" class="auction-image">
+                        <div class="auction-info">
+                            <h3 th:text="${auction.productName}"></h3>
+                            <p class="price">Base Price: $<span th:text="${#numbers.formatDecimal(auction.basePrice, 1, 2)}"></span></p>
+                            <p class="current-bid">
+                                <span th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE}">
+                                    Current Bid: $<span th:text="${#numbers.formatDecimal(auction.currentHighestBid, 1, 2)}"></span>
+                                </span>
+                                <span th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).ENDED}">
+                                    Final Price: $<span th:text="${#numbers.formatDecimal(auction.currentHighestBid, 1, 2)}"></span>
+                                </span>
+                                <span th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).UPCOMING}">
+                                    Starting Price: $<span th:text="${#numbers.formatDecimal(auction.basePrice, 1, 2)}"></span>
+                                </span>
+                            </p>
+                            <p class="status" th:text="${auction.status}"></p>
+                        </div>
+                    </a>
+                    
+                    <!-- Winner Information for Ended Auctions -->
+                    <div th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).ENDED}" 
+                         class="winner-info" style="padding: 1rem; background-color: #f9f9f9; border-top: 2px solid #27ae60; margin-top: 0.5rem;">
+                        <h4 style="color: #27ae60; margin-bottom: 0.75rem;">Winner Information</h4>
+                        <div th:with="winnerInfo=${winnerInfoMap[auction.id]}">
+                            <div th:if="${winnerInfo != null and winnerInfo.winner != null}">
+                                <p>
+                                    <strong>Winner:</strong> <span th:text="${winnerInfo.winner.fullName}"></span><br>
+                                    <strong>Email:</strong> <span th:text="${winnerInfo.winner.email}"></span>
+                                </p>
+                                <div th:if="${winnerInfo.deliveryAddress != null}" 
+                                     style="margin-top: 0.75rem; padding: 0.75rem; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
+                                    <strong style="color: #2c3e50;">Delivery Address:</strong>
+                                    <div style="margin-top: 0.5rem; color: #555;">
+                                        <p style="margin: 0.25rem 0;"><strong th:text="${winnerInfo.deliveryAddress.fullName}"></strong></p>
+                                        <p style="margin: 0.25rem 0;" th:text="${winnerInfo.deliveryAddress.addressLine}"></p>
+                                        <p style="margin: 0.25rem 0;" th:text="${winnerInfo.deliveryAddress.getFormattedAddress()}"></p>
+                                        <p style="margin: 0.25rem 0;" th:if="${winnerInfo.deliveryAddress.phoneNumber != null}">
+                                            <strong>Phone:</strong> <span th:text="${winnerInfo.deliveryAddress.phoneNumber}"></span>
+                                        </p>
+                                        <p style="margin: 0.25rem 0;" th:if="${winnerInfo.deliveryAddress.addressType != null}">
+                                            <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500; background-color: #ff9800; color: white;" 
+                                                  th:text="${winnerInfo.deliveryAddress.addressType}"></span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <p th:if="${winnerInfo.deliveryAddress == null}" style="color: #e74c3c; font-style: italic; margin-top: 0.5rem;">
+                                    Winner has not set up a delivery address in their Address Book yet.
+                                </p>
+                            </div>
+                            <p th:if="${winnerInfo == null or winnerInfo.winner == null}" style="color: #e74c3c; font-style: italic;">
+                                No bids were placed on this auction.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p th:if="${auctions == null or auctions.isEmpty()}" class="no-results">You haven't created any auctions yet.</p>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

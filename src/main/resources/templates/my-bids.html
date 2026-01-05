@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bids - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li th:if="${currentUser != null and currentUser.approved}">
+                    <div class="mode-toggle-nav">
+                        <form th:action="@{/dashboard/toggle-buyer}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.buyerMode ? 'btn-nav-active' : ''}">
+                                Buyer
+                            </button>
+                        </form>
+                        <form th:action="@{/dashboard/toggle-seller}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.sellerMode ? 'btn-nav-active' : ''}">
+                                Seller
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <h1>My Bids</h1>
+            
+            <div class="bids-list" th:if="${bids != null and !bids.isEmpty()}">
+                <div class="bid-item" th:each="bid : ${bids}">
+                    <h3><a th:href="@{/auction/{id}(id=${bid.auction.id})}" 
+                            th:text="${bid.auction.productName}"></a></h3>
+                    <p>Bid Amount: $<span th:text="${#numbers.formatDecimal(bid.bidAmount, 1, 2)}"></span></p>
+                    <p>Bid Time: <span th:text="${#temporals.format(bid.bidTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                    <p>Auction Status: <span th:text="${bid.auction.status}"></span></p>
+                </div>
+            </div>
+            <p th:if="${bids == null or bids.isEmpty()}" class="no-results">You haven't placed any bids yet.</p>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

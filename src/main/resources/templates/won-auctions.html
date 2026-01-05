@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Won Auctions - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li th:if="${currentUser != null and currentUser.approved}">
+                    <div class="mode-toggle-nav">
+                        <form th:action="@{/dashboard/toggle-buyer}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.buyerMode ? 'btn-nav-active' : ''}">
+                                Buyer
+                            </button>
+                        </form>
+                        <form th:action="@{/dashboard/toggle-seller}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.sellerMode ? 'btn-nav-active' : ''}">
+                                Seller
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                <li th:if="${currentUser != null}">
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <h1>Won Auctions</h1>
+            <p class="section-description">Congratulations! You have won the following auctions. Please proceed to payment to complete your purchase.</p>
+            
+            <div class="auction-grid" th:if="${wonAuctions != null and !wonAuctions.isEmpty()}">
+                <div class="auction-card won-auction-card" th:each="auction : ${wonAuctions}">
+                    <div class="won-badge">Won</div>
+                    <a th:href="@{/auction/{id}(id=${auction.id})}">
+                        <img th:if="${auction.image != null}" 
+                             th:src="@{'/uploads/auction/' + ${auction.image}}" 
+                             alt="Product Image" class="auction-image">
+                        <img th:if="${auction.image == null}" 
+                             src="/images/placeholder.jpg" 
+                             alt="No Image" class="auction-image">
+                    </a>
+                    <div class="auction-info">
+                        <h3><a th:href="@{/auction/{id}(id=${auction.id})}" 
+                                th:text="${auction.productName}"></a></h3>
+                        <p class="category">Category: <span th:text="${auction.category.name}"></span></p>
+                        <p class="seller">Seller: <span th:text="${auction.seller.fullName}"></span></p>
+                        <p class="price">Base Price: $<span th:text="${#numbers.formatDecimal(auction.basePrice, 1, 2)}"></span></p>
+                        <p class="winning-bid">
+                            <strong>Winning Bid: $<span th:text="${#numbers.formatDecimal(auction.currentHighestBid, 1, 2)}"></span></strong>
+                        </p>
+                        <p class="end-time">Ended: <span th:text="${#temporals.format(auction.endTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                        <div class="payment-section">
+                            <button class="btn btn-primary btn-payment" type="button">
+                                Proceed to Payment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p th:if="${wonAuctions == null or wonAuctions.isEmpty()}" class="no-results">
+                You haven't won any auctions yet. Keep bidding to win amazing items!
+            </p>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

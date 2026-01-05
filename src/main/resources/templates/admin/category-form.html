@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${categoryId != null ? 'Edit Category' : 'Create Category'} + ' - Bid2Buy'">Category Form</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/admin/dashboard">Admin Dashboard</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="form-container">
+                <h2 th:text="${categoryId != null ? 'Edit Category' : 'Create Category'}"></h2>
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+                
+                <form th:action="${categoryId != null ? '/admin/category/' + categoryId + '/edit' : '/admin/category/create'}" 
+                      th:object="${categoryDTO}" method="post" class="form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="form-group">
+                        <label for="name">Category Name *</label>
+                        <input type="text" id="name" th:field="*{name}" class="form-input" required>
+                        <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" th:field="*{description}" class="form-input"></textarea>
+                        <span th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="error"></span>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" 
+                            th:text="${categoryId != null ? 'Update Category' : 'Create Category'}"></button>
+                    <a href="/admin/dashboard" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

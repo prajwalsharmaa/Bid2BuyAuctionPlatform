@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bid2Buy - Real-Time E-Auction Platform</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="#categories">Categories</a></li>
+                <li><a href="#about">About Us</a></li>
+                <li><a href="#contact">Contact Us</a></li>
+                <li th:if="${currentUser == null}"><a href="/register">Register</a></li>
+                <li th:if="${currentUser == null}"><a href="/login">Login</a></li>
+                <li th:if="${currentUser != null}" class="dropdown">
+                    <a href="#" class="dropdown-toggle" id="accountDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span th:text="|${currentUser.fullName}'s Account|"></span> ▼
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="accountDropdown">
+                        <a class="dropdown-item" href="/account/manage">Manage My Account</a>
+                        <a class="dropdown-item" href="/account/profile">My Profile</a>
+                        <a class="dropdown-item" href="/account/addresses">Address Book</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="/dashboard">Dashboard</a>
+                    </div>
+                </li>
+                <li th:if="${#authentication != null and #authentication.isAuthenticated() and #authentication.authorities.?[authority == 'ROLE_ADMIN'].size() > 0}"><a href="/admin/dashboard">Admin</a></li>
+                <li th:if="${currentUser != null and currentUser.approved}">
+                    <div class="mode-toggle-nav">
+                        <form th:action="@{/dashboard/toggle-buyer}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.buyerMode ? 'btn-nav-active' : ''}">
+                                Buyer
+                            </button>
+                        </form>
+                        <form th:action="@{/dashboard/toggle-seller}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.sellerMode ? 'btn-nav-active' : ''}">
+                                Seller
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                <li th:if="${currentUser != null}">
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title">Elevate Auctions, Empower Bidders</h1>
+            <p class="hero-subtitle">Real-Time E-Auction Platform</p>
+        </div>
+    </section>
+    
+    <section class="search-section">
+        <div class="container">
+            <form method="get" action="/" class="search-form">
+                <select name="categoryId" class="form-select">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${categories}" 
+                            th:value="${cat.id}" 
+                            th:text="${cat.name}"
+                            th:selected="${selectedCategoryId == cat.id}"></option>
+                </select>
+                <input type="text" name="search" placeholder="Search products..." 
+                       th:value="${searchQuery}" class="form-input">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+    </section>
+    
+    <!-- Show filtered results when search or category filter is applied -->
+    <section class="auctions-section" th:if="${auctions != null}">
+        <div class="container">
+            <h2>Search Results</h2>
+            <div class="auction-grid" th:if="${!auctions.isEmpty()}">
+                <div class="auction-card" th:each="auction : ${auctions}">
+                    <a th:href="@{/auction/{id}(id=${auction.id})}">
+                        <img th:if="${auction.image != null}" 
+                             th:src="@{'/uploads/auction/' + ${auction.image}}" 
+                             alt="Product Image" class="auction-image">
+                        <div class="auction-info">
+                            <h3 th:text="${auction.productName}"></h3>
+                            <p class="category" th:text="${auction.category.name}"></p>
+                            <p class="price">Base Price: $<span th:text="${#numbers.formatDecimal(auction.basePrice, 1, 2)}"></span></p>
+                            <p class="current-bid" th:if="${auction.bids != null and !auction.bids.isEmpty()}">
+                                Current Bid: $<span th:text="${#numbers.formatDecimal(auction.currentHighestBid, 1, 2)}"></span>
+                            </p>
+                            <p class="status" th:text="${auction.status}"></p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <p th:if="${auctions.isEmpty()}" class="no-results">No auctions found.</p>
+        </div>
+    </section>
+    
+    <!-- Show Live Auctions section when no search/filter is applied -->
+    <section class="auctions-section" th:if="${liveAuctions != null}">
+        <div class="container">
+            <h2>Live Auctions</h2>
+            <div class="auction-grid" th:if="${!liveAuctions.isEmpty()}">
+                <div class="auction-card" th:each="auction : ${liveAuctions}">
+                    <a th:href="@{/auction/{id}(id=${auction.id})}">
+                        <img th:if="${auction.image != null}" 
+                             th:src="@{'/uploads/auction/' + ${auction.image}}" 
+                             alt="Product Image" class="auction-image">
+                        <div class="auction-info">
+                            <h3 th:text="${auction.productName}"></h3>
+                            <p class="category" th:text="${auction.category.name}"></p>
+                            <p class="price">Base Price: Rs.<span th:text="${#numbers.formatDecimal(auction.basePrice, 1, 2)}"></span></p>
+                            <p class="current-bid" th:if="${auction.bids != null and !auction.bids.isEmpty()}">
+                                Current Bid: Rs.<span th:text="${#numbers.formatDecimal(auction.currentHighestBid, 1, 2)}"></span>
+                            </p>
+                            <p class="status" th:text="${auction.status}"></p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <p th:if="${liveAuctions.isEmpty()}" class="no-results">No live auctions at the moment.</p>
+        </div>
+    </section>
+    
+    <!-- Show Upcoming Auctions section when no search/filter is applied -->
+    <section class="auctions-section" th:if="${upcomingAuctions != null}">
+        <div class="container">
+            <h2>Upcoming Auctions</h2>
+            <div class="auction-grid" th:if="${!upcomingAuctions.isEmpty()}">
+                <div class="auction-card" th:each="auction : ${upcomingAuctions}">
+                    <a th:href="@{/auction/{id}(id=${auction.id})}">
+                        <img th:if="${auction.image != null}" 
+                             th:src="@{'/uploads/auction/' + ${auction.image}}" 
+                             alt="Product Image" class="auction-image">
+                        <div class="auction-info">
+                            <h3 th:text="${auction.productName}"></h3>
+                            <p class="category" th:text="${auction.category.name}"></p>
+                            <p class="price">Base Price: Rs.<span th:text="${#numbers.formatDecimal(auction.basePrice, 1, 2)}"></span></p>
+                            <p class="start-time">Starts: <span th:text="${#temporals.format(auction.startTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                            <p class="status" th:text="${auction.status}"></p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <p th:if="${upcomingAuctions.isEmpty()}" class="no-results">No upcoming auctions at the moment.</p>
+        </div>
+    </section>
+    
+    <section id="about" class="about-section">
+        <div class="container">
+            <h2>About Us</h2>
+            <p>Bid2Buy is a real-time e-auction platform designed to elevate auctions and empower bidders. Our platform provides a seamless bidding experience with live updates and secure transactions.</p>
+        </div>
+    </section>
+    
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2>Contact Us</h2>
+            <p>Email: contact@bid2buy.com</p>
+            <p>Phone: +1 (555) 123-4567</p>
+        </div>
+    </section>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

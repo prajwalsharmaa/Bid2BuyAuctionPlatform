@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/admin/dashboard">Admin Dashboard</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <h1>Admin Dashboard</h1>
+            
+            <div class="admin-section">
+                <h2>Users Management</h2>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Approved</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td th:text="${user.fullName}"></td>
+                            <td th:text="${user.email}"></td>
+                            <td th:text="${user.role}"></td>
+                            <td th:text="${user.approved ? 'Yes' : 'No'}"></td>
+                            <td>
+                                <form th:if="${!user.approved}" 
+                                      th:action="@{/admin/user/{id}/approve(id=${user.id})}" 
+                                      method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <form th:if="${user.approved}" 
+                                      th:action="@{/admin/user/{id}/reject(id=${user.id})}" 
+                                      method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-warning">Reject</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="admin-section">
+                <h2>Categories</h2>
+                <a href="/admin/category/create" class="btn btn-primary">Add Category</a>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="category : ${categories}">
+                            <td th:text="${category.name}"></td>
+                            <td th:text="${category.description}"></td>
+                            <td>
+                                <a th:href="@{/admin/category/{id}/edit(id=${category.id})}" 
+                                   class="btn btn-sm btn-primary">Edit</a>
+                                <form th:action="@{/admin/category/{id}/delete(id=${category.id})}" 
+                                      method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="admin-section">
+                <h2>Auctions</h2>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Seller</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="auction : ${auctions}">
+                            <td th:text="${auction.productName}"></td>
+                            <td th:text="${auction.seller.fullName}"></td>
+                            <td th:text="${auction.status}"></td>
+                            <td>
+                                <a th:href="@{/auction/{id}(id=${auction.id})}" 
+                                   class="btn btn-sm btn-primary">View</a>
+                                <form th:if="${auction.status != T(com.bid2buy.entity.Auction.AuctionStatus).ENDED}" 
+                                      th:action="@{/admin/auction/{id}/disable(id=${auction.id})}" 
+                                      method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Disable</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

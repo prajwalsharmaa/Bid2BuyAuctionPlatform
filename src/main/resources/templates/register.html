@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/login">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="form-container">
+                <h2>Register</h2>
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+                
+                <form th:action="@{/register}" th:object="${registerDTO}" method="post" class="form">
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" th:field="*{email}" class="form-input" required>
+                        <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" th:field="*{firstName}" class="form-input" required>
+                        <span th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" th:field="*{lastName}" class="form-input" required>
+                        <span th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" id="password" th:field="*{password}" class="form-input" required minlength="8">
+                        <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password *</label>
+                        <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-input" required>
+                        <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gender">Gender *</label>
+                        <select id="gender" th:field="*{gender}" class="form-select" required>
+                            <option value="">Select Gender</option>
+                            <option value="MALE">Male</option>
+                            <option value="FEMALE">Female</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                        <span th:if="${#fields.hasErrors('gender')}" th:errors="*{gender}" class="error"></span>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Register</button>
+                    <p class="form-footer">Already have an account? <a href="/login">Login here</a></p>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            if (password !== confirmPassword) {
+                this.setCustomValidity('Passwords do not match');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    </script>
+</body>
+</html>
+

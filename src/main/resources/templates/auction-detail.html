@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${auction.productName} + ' - Bid2Buy'">Auction Detail</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li th:if="${currentUser != null}"><a href="/dashboard">Dashboard</a></li>
+                <li th:if="${currentUser != null and currentUser.approved}">
+                    <div class="mode-toggle-nav">
+                        <form th:action="@{/dashboard/toggle-buyer}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.buyerMode ? 'btn-nav-active' : ''}">
+                                Buyer
+                            </button>
+                        </form>
+                        <form th:action="@{/dashboard/toggle-seller}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${currentUser.sellerMode ? 'btn-nav-active' : ''}">
+                                Seller
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                <li th:if="${currentUser != null}">
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <!-- Hidden input for auctionId - always available for WebSocket connection -->
+            <input type="hidden" id="auctionId" th:value="${auction.id}">
+            
+            <div class="auction-detail">
+                <div class="auction-image-section">
+                    <img th:if="${auction.image != null}" 
+                         th:src="@{'/uploads/auction/' + ${auction.image}}" 
+                         alt="Product Image" class="detail-image">
+                </div>
+                
+                <div class="auction-info-section">
+                    <h1 th:text="${auction.productName}"></h1>
+                    <p class="category">Category: <span th:text="${auction.category.name}"></span></p>
+                    <p class="seller">Seller: <span th:text="${auction.seller.fullName}"></span></p>
+                    
+                    <div th:if="${auction.description != null and !#strings.isEmpty(auction.description)}" 
+                         class="description-section" style="margin: 1.5rem 0; padding: 1.5rem; background-color: #f9f9f9; border-radius: 8px; border-left: 4px solid #3498db;">
+                        <h3 style="color: #2c3e50; margin-bottom: 1rem; font-size: 1.25rem;">Product Description</h3>
+                        <p style="color: #555; line-height: 1.6; white-space: pre-wrap;" th:text="${auction.description}"></p>
+                    </div>
+                    
+                    <div class="price-section">
+                        <p class="base-price">Base Price: Rs.<span th:text="${#numbers.formatDecimal(auction.basePrice, 1, 2)}"></span></p>
+                        <p class="current-bid" id="currentBid">
+                            Current Highest Bid: Rs.<span id="bidAmount" th:text="${#numbers.formatDecimal(auction.currentHighestBid, 1, 2)}"></span>
+                        </p>
+                    </div>
+                    
+                    <div class="time-section">
+                        <p>Start Time: <span th:text="${#temporals.format(auction.startTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                        <p>End Time: <span th:text="${#temporals.format(auction.endTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                        <p class="status" th:text="${auction.status}"></p>
+                    </div>
+                    
+                    <div th:if="${canBid}" class="bid-section">
+                        <h3>Place a Bid</h3>
+                        <form id="bidForm" class="bid-form">
+                            <div class="form-group">
+                                <label for="bidAmount">Bid Amount (Rs.)</label>
+                                <input type="number" id="bidAmountInput" step="0.01" min="0.01" 
+                                       class="form-input" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Place Bid</button>
+                        </form>
+                    </div>
+                    
+                    <div th:if="${canBid != null and !canBid and currentUser != null}" class="alert alert-info">
+                        <p th:if="${!currentUser.approved}">You must be approved to place bids.</p>
+                        <p th:if="${currentUser.approved and !currentUser.buyerMode}">Please enable Buyer Mode to place bids.</p>
+                        <p th:if="${auction.seller.id == currentUser.id}">You cannot bid on your own auction.</p>
+                        <p th:if="${auction.status != T(com.bid2buy.entity.Auction.AuctionStatus).LIVE}">This auction is not live.</p>
+                    </div>
+                    
+                    <!-- Winner Information for Seller viewing their ended auction -->
+                    <div th:if="${currentUser != null and auction.seller.id == currentUser.id and auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).ENDED and winnerInfo != null}" 
+                         class="winner-section" style="margin-top: 2rem; padding: 1.5rem; background-color: #f9f9f9; border-radius: 8px; border: 2px solid #27ae60;">
+                        <h3 style="color: #27ae60; margin-bottom: 1rem;">Auction Winner & Delivery Address</h3>
+                        <div th:if="${winnerInfo.winner != null}">
+                            <p><strong>Winner Name:</strong> <span th:text="${winnerInfo.winner.fullName}"></span></p>
+                            <p><strong>Winner Email:</strong> <span th:text="${winnerInfo.winner.email}"></span></p>
+                            <p><strong>Winning Bid:</strong> $<span th:text="${#numbers.formatDecimal(auction.currentHighestBid, 1, 2)}"></span></p>
+                            
+                            <div th:if="${winnerInfo.deliveryAddress != null}" 
+                                 style="margin-top: 1.5rem; padding: 1rem; background-color: white; border-radius: 4px; border: 1px solid #e0e0e0;">
+                                <h4 style="color: #2c3e50; margin-bottom: 0.75rem;">Delivery Address:</h4>
+                                <p style="margin: 0.5rem 0;"><strong th:text="${winnerInfo.deliveryAddress.fullName}"></strong></p>
+                                <p style="margin: 0.5rem 0;" th:text="${winnerInfo.deliveryAddress.addressLine}"></p>
+                                <p style="margin: 0.5rem 0;" th:text="${winnerInfo.deliveryAddress.getFormattedAddress()}"></p>
+                                <p style="margin: 0.5rem 0;" th:if="${winnerInfo.deliveryAddress.phoneNumber != null}">
+                                    <strong>Phone:</strong> <span th:text="${winnerInfo.deliveryAddress.phoneNumber}"></span>
+                                </p>
+                                <p style="margin: 0.5rem 0;" th:if="${winnerInfo.deliveryAddress.addressType != null}">
+                                    <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500; background-color: #ff9800; color: white;" 
+                                          th:text="${winnerInfo.deliveryAddress.addressType}"></span>
+                                </p>
+                            </div>
+                            <p th:if="${winnerInfo.deliveryAddress == null}" style="color: #e74c3c; font-style: italic; margin-top: 1rem;">
+                                Winner has not set up a delivery address in their Address Book yet.
+                            </p>
+                        </div>
+                        <p th:if="${winnerInfo.winner == null}" style="color: #e74c3c; font-style: italic;">
+                            No bids were placed on this auction.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bids-section">
+                <h2>Bid History</h2>
+                <div id="bidsList" class="bids-list">
+                    <div th:each="bid : ${auction.bids}" class="bid-item">
+                        <p><strong th:text="${bid.bidder.fullName}"></strong> - 
+                           $<span th:text="${#numbers.formatDecimal(bid.bidAmount, 1, 2)}"></span> - 
+                           <span th:text="${#temporals.format(bid.bidTime, 'yyyy-MM-dd HH:mm')}"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+    <script th:src="@{/js/bidding.js}"></script>
+    <script>
+        // Initialize WebSocket connection for real-time bid updates
+        // This works for all users viewing the auction, not just those who can bid
+        document.addEventListener('DOMContentLoaded', function() {
+            const auctionIdElement = document.getElementById('auctionId');
+            if (auctionIdElement) {
+                const auctionId = auctionIdElement.value;
+                initBidding(auctionId);
+            } else {
+                // If auctionId is not in a hidden input, get it from the URL or data attribute
+                const urlParts = window.location.pathname.split('/');
+                const auctionId = urlParts[urlParts.length - 1];
+                if (auctionId && !isNaN(auctionId)) {
+                    initBidding(auctionId);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Setup - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="form-container">
+                <h2>Complete Your Profile</h2>
+                <p style="color: #666; margin-bottom: 1.5rem;">Please provide your basic information. You can add delivery addresses later in Account Settings.</p>
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+                
+                <form th:action="@{/profile/setup}" th:object="${profileSetupDTO}" method="post" 
+                      enctype="multipart/form-data" class="form">
+                    <div class="form-group">
+                        <label for="profilePicture">Profile Picture</label>
+                        <input type="file" id="profilePicture" th:field="*{profilePicture}" 
+                               accept="image/jpeg,image/png" class="form-input">
+                        <span th:if="${#fields.hasErrors('profilePicture')}" 
+                              th:errors="*{profilePicture}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="citizenshipCard">Citizenship Card (JPG, PNG, or PDF)</label>
+                        <input type="file" id="citizenshipCard" th:field="*{citizenshipCard}" 
+                               accept="image/jpeg,image/png,application/pdf" class="form-input">
+                        <span th:if="${#fields.hasErrors('citizenshipCard')}" 
+                              th:errors="*{citizenshipCard}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" th:field="*{phone}" 
+                               pattern="[0-9]{10,15}" class="form-input" required>
+                        <span th:if="${#fields.hasErrors('phone')}" 
+                              th:errors="*{phone}" class="error"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="address">Address (Optional)</label>
+                        <textarea id="address" th:field="*{address}" class="form-input" placeholder="You can add addresses later in Account Settings > Address Book"></textarea>
+                        <span th:if="${#fields.hasErrors('address')}" 
+                              th:errors="*{address}" class="error"></span>
+                        <small style="color: #666; font-size: 0.9rem;">You can add delivery addresses later in your Account Settings.</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Complete Profile</button>
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+

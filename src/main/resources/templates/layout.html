@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Bid2Buy - Real-Time E-Auction Platform'">Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/#categories">Categories</a></li>
+                <li><a href="/#about">About Us</a></li>
+                <li><a href="/#contact">Contact Us</a></li>
+                <li th:if="${currentUser == null}"><a href="/register">Register</a></li>
+                <li th:if="${currentUser == null}"><a href="/login">Login</a></li>
+                <li th:if="${currentUser != null}"><a href="/dashboard">Dashboard</a></li>
+                <li th:if="${#authentication != null and #authentication.isAuthenticated() and #authentication.authorities.?[authority == 'ROLE_ADMIN'].size() > 0}"><a href="/admin/dashboard">Admin</a></li>
+                <li th:if="${currentUser != null}">
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:replace="${content}"></div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+    <div th:replace="${scripts} ?: ''"></div>
+</body>
+</html>
+

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Bid2Buy</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">Bid2Buy</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li th:if="${#authentication != null and #authentication.authorities.?[authority == 'ROLE_ADMIN'].size() > 0}"><a href="/admin/dashboard">Admin</a></li>
+                <li th:if="${user != null and user.approved}">
+                    <div class="mode-toggle-nav">
+                        <form th:action="@{/dashboard/toggle-buyer}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${user.buyerMode ? 'btn-nav-active' : ''}">
+                                Buyer
+                            </button>
+                        </form>
+                        <form th:action="@{/dashboard/toggle-seller}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-nav" 
+                                    th:classappend="${user.sellerMode ? 'btn-nav-active' : ''}">
+                                Seller
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="container">
+            <h1>Dashboard</h1>
+            
+            <div class="dashboard-section">
+                <h2>Profile Status</h2>
+                <div th:if="${!hasProfile}" class="alert alert-warning">
+                    <p>Please complete your profile setup to continue.</p>
+                    <a href="/profile/setup" class="btn btn-primary">Setup Profile</a>
+                </div>
+                <div th:if="${hasProfile}">
+                    <p>Profile Status: <span th:if="${user.approved}" class="status-approved">Approved</span>
+                                      <span th:if="${!user.approved}" class="status-pending">Pending Approval</span></p>
+                </div>
+            </div>
+            
+            <div class="dashboard-section">
+                <h2>Mode Selection</h2>
+                <div class="mode-toggle">
+                    <form th:action="@{/dashboard/toggle-buyer}" method="post" style="display: inline;">
+                        <button type="submit" class="btn" 
+                                th:classappend="${user.buyerMode ? 'btn-primary' : 'btn-secondary'}">
+                            Buyer Mode <span th:if="${user.buyerMode}">(Active)</span>
+                        </button>
+                    </form>
+                    <form th:action="@{/dashboard/toggle-seller}" method="post" style="display: inline;">
+                        <button type="submit" class="btn" 
+                                th:classappend="${user.sellerMode ? 'btn-primary' : 'btn-secondary'}">
+                            Seller Mode <span th:if="${user.sellerMode}">(Active)</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="dashboard-section" th:if="${user.approved and user.sellerMode}">
+                <h2>Seller Actions</h2>
+                <a href="/auction/create" class="btn btn-primary">Create Auction</a>
+                <a href="/auction/my-auctions" class="btn btn-secondary">My Auctions</a>
+            </div>
+            
+            <div class="dashboard-section" th:if="${user.approved and user.buyerMode}">
+                <h2>Buyer Actions</h2>
+                <a href="/" class="btn btn-primary">Browse Auctions</a>
+                <a href="/bid/my-bids" class="btn btn-secondary">My Bids</a>
+                <a href="/auction/won" class="btn btn-success">Won Auctions</a>
+            </div>
+            
+            <div class="dashboard-section" th:if="${!user.approved}">
+                <div class="alert alert-info">
+                    <p>Your account is pending approval. You will be able to buy and sell once approved by an administrator.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Bid2Buy. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
+
