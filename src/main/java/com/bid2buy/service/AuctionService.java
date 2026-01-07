@@ -159,5 +159,91 @@ public class AuctionService {
         Bid highestBid = auction.getHighestBid();
         return highestBid != null ? highestBid.getBidder() : null;
     }
+    
+    /**
+     * Update an auction (only for LIVE and UPCOMING auctions)
+     */
+    public Auction updateAuction(Long auctionId, User seller, AuctionCreateDTO auctionDTO) throws IOException {
+        Auction auction = getAuctionById(auctionId);
+        
+        // Verify ownership
+        if (!auction.getSeller().getId().equals(seller.getId())) {
+            throw new IllegalStateException("You can only edit your own auctions");
+        }
+        
+        // Only allow editing LIVE and UPCOMING auctions
+        if (auction.getStatus() == AuctionStatus.ENDED) {
+            throw new IllegalStateException("Cannot edit ended auctions");
+        }
+        
+        // If auction is LIVE and has bids, restrict some changes
+        if (auction.getStatus() == AuctionStatus.LIVE && !auction.getBids().isEmpty()) {
+            // Don't allow changing base price or end time if there are bids
+            if (!auction.getBasePrice().equals(auctionDTO.getBasePrice())) {
+                throw new IllegalStateException("Cannot change base price for live auctions with bids");
+            }
+            if (!auction.getEndTime().equals(auctionDTO.getEndTime())) {
+                throw new IllegalStateException("Cannot change end time for live auctions with bids");
+            }
+        }
+        
+        Category category = categoryRepository.findById(auctionDTO.getCategoryId())
+            .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+        
+        if (auctionDTO.getEndTime().isBefore(auctionDTO.getStartTime())) {
+            throw new IllegalArgumentException("End time must be after start time");
+        }
+        
+        // Update fields
+        auction.setProductName(auctionDTO.getProductName());
+        auction.setDescription(auctionDTO.getDescription());
+        auction.setCategory(category);
+        
+        // Only update base price and end time if no bids exist
+        if (auction.getBids().isEmpty()) {
+            auction.setBasePrice(auctionDTO.getBasePrice());
+            auction.setEndTime(auctionDTO.getEndTime());
+        }
+        
+        // Update start time only for UPCOMING auctions
+        if (auction.getStatus() == AuctionStatus.UPCOMING) {
+            if (auctionDTO.getStartTime().isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Start time must be in the future");
+            }
+            auction.setStartTime(auctionDTO.getStartTime());
+        }
+        
+        // Update image if provided
+        if (auctionDTO.getImage() != null && !auctionDTO.getImage().isEmpty()) {
+            String filename = fileStorageService.storeAuctionImage(auctionDTO.getImage());
+            auction.setImage(filename);
+        }
+        
+        return auctionRepository.save(auction);
+    }
+    
+    /**
+     * Delete an auction (only for LIVE and UPCOMING auctions without bids)
+     */
+    public void deleteAuction(Long auctionId, User seller) {
+        Auction auction = getAuctionById(auctionId);
+        
+        // Verify ownership
+        if (!auction.getSeller().getId().equals(seller.getId())) {
+            throw new IllegalStateException("You can only delete your own auctions");
+        }
+        
+        // Only allow deleting LIVE and UPCOMING auctions
+        if (auction.getStatus() == AuctionStatus.ENDED) {
+            throw new IllegalStateException("Cannot delete ended auctions");
+        }
+        
+        // Don't allow deleting if there are bids (to protect bidders)
+        if (!auction.getBids().isEmpty()) {
+            throw new IllegalStateException("Cannot delete auctions with existing bids");
+        }
+        
+        auctionRepository.delete(auction);
+    }
 }
 

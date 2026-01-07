@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Auction - Bid2Buy</title>
+    <title>Edit Auction - Bid2Buy</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -40,10 +40,20 @@
     <main class="main-content">
         <div class="container">
             <div class="form-container">
-                <h2>Create New Auction</h2>
+                <h2>Edit Auction</h2>
                 <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
                 
-                <form th:action="@{/auction/create}" th:object="${auctionCreateDTO}" method="post" 
+                <div th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE and !auction.bids.isEmpty()}" 
+                     class="alert alert-warning">
+                    <strong>Note:</strong> This auction is LIVE and has bids. Base price and end time cannot be changed to protect bidders.
+                </div>
+                <div th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE}" 
+                     class="alert alert-info">
+                    <strong>Note:</strong> Start time cannot be changed for LIVE auctions.
+                </div>
+                
+                <form th:action="@{/auction/{id}/edit(id=${auctionId})}" th:object="${auctionCreateDTO}" method="post" 
                       enctype="multipart/form-data" class="form">
                     <div class="form-group">
                         <label for="productName">Product Name *</label>
@@ -65,8 +75,15 @@
                     
                     <div class="form-group">
                         <label for="image">Product Image</label>
+                        <div th:if="${auction.image != null}" style="margin-bottom: 0.5rem;">
+                            <p>Current Image:</p>
+                            <img th:src="@{'/uploads/auction/' + ${auction.image}}" 
+                                 alt="Current Product Image" 
+                                 style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
                         <input type="file" id="image" th:field="*{image}" 
                                accept="image/jpeg,image/png" class="form-input">
+                        <small class="form-help">Leave empty to keep current image, or upload a new one to replace it.</small>
                         <span th:if="${#fields.hasErrors('image')}" 
                               th:errors="*{image}" class="error"></span>
                     </div>
@@ -86,29 +103,41 @@
                     <div class="form-group">
                         <label for="basePrice">Base Price *</label>
                         <input type="number" id="basePrice" th:field="*{basePrice}" 
-                               step="0.01" min="0.01" class="form-input" required>
+                               step="0.01" min="0.01" class="form-input" 
+                               th:disabled="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE and !auction.bids.isEmpty()}"
+                               required>
                         <span th:if="${#fields.hasErrors('basePrice')}" 
                               th:errors="*{basePrice}" class="error"></span>
+                        <small th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE and !auction.bids.isEmpty()}" 
+                               class="form-help">Cannot change base price for live auctions with bids.</small>
                     </div>
                     
                     <div class="form-group">
                         <label for="startTime">Auction Start Time *</label>
                         <input type="datetime-local" id="startTime" th:field="*{startTime}" 
-                               class="form-input" required>
+                               class="form-input" 
+                               th:disabled="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE}"
+                               required>
                         <span th:if="${#fields.hasErrors('startTime')}" 
                               th:errors="*{startTime}" class="error"></span>
+                        <small th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE}" 
+                               class="form-help">Cannot change start time for live auctions.</small>
                     </div>
                     
                     <div class="form-group">
                         <label for="endTime">Auction End Time *</label>
                         <input type="datetime-local" id="endTime" th:field="*{endTime}" 
-                               class="form-input" required>
+                               class="form-input" 
+                               th:disabled="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE and !auction.bids.isEmpty()}"
+                               required>
                         <span th:if="${#fields.hasErrors('endTime')}" 
                               th:errors="*{endTime}" class="error"></span>
+                        <small th:if="${auction.status == T(com.bid2buy.entity.Auction.AuctionStatus).LIVE and !auction.bids.isEmpty()}" 
+                               class="form-help">Cannot change end time for live auctions with bids.</small>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary">Create Auction</button>
-                    <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Update Auction</button>
+                    <a th:href="@{/auction/my-auctions}" class="btn btn-secondary">Cancel</a>
                 </form>
             </div>
         </div>

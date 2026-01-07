@@ -40,8 +40,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             // Redirect to profile setup if profile is incomplete
             response.sendRedirect("/profile/setup");
         } else {
-            // Otherwise go to dashboard
-            response.sendRedirect("/dashboard");
+            // Otherwise go to home page
+            response.sendRedirect("/");
         }
     }
 }

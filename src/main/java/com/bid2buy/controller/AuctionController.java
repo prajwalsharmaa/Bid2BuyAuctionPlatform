@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -159,6 +160,95 @@ public class AuctionController {
         model.addAttribute("auctions", auctions);
         model.addAttribute("winnerInfoMap", winnerInfoMap);
         return "my-auctions";
+    }
+    
+    @GetMapping("/auction/{id}/edit")
+    public String showEditAuctionForm(@PathVariable("id") Long id, Model model) {
+        User user = getCurrentUser();
+        Auction auction = auctionService.getAuctionById(id);
+        
+        // Verify ownership
+        if (!auction.getSeller().getId().equals(user.getId())) {
+            return "redirect:/auction/my-auctions?error=unauthorized";
+        }
+        
+        // Only allow editing LIVE and UPCOMING auctions
+        if (auction.getStatus() == Auction.AuctionStatus.ENDED) {
+            return "redirect:/auction/my-auctions?error=cannot_edit_ended";
+        }
+        
+        // Populate DTO with existing auction data
+        AuctionCreateDTO auctionDTO = new AuctionCreateDTO();
+        auctionDTO.setProductName(auction.getProductName());
+        auctionDTO.setDescription(auction.getDescription());
+        auctionDTO.setCategoryId(auction.getCategory().getId());
+        auctionDTO.setBasePrice(auction.getBasePrice());
+        auctionDTO.setStartTime(auction.getStartTime());
+        auctionDTO.setEndTime(auction.getEndTime());
+        
+        List<Category> categories = categoryRepository.findAll();
+        model.addAttribute("categories", categories);
+        model.addAttribute("auctionCreateDTO", auctionDTO);
+        model.addAttribute("auctionId", id);
+        model.addAttribute("auction", auction);
+        return "auction-edit";
+    }
+    
+    @PostMapping("/auction/{id}/edit")
+    public String updateAuction(@PathVariable("id") Long id,
+                               @Valid @ModelAttribute AuctionCreateDTO auctionCreateDTO,
+                               BindingResult result,
+                               Model model,
+                               RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            List<Category> categories = categoryRepository.findAll();
+            model.addAttribute("categories", categories);
+            model.addAttribute("auctionId", id);
+            Auction auction = auctionService.getAuctionById(id);
+            model.addAttribute("auction", auction);
+            return "auction-edit";
+        }
+        
+        try {
+            User seller = getCurrentUser();
+            auctionService.updateAuction(id, seller, auctionCreateDTO);
+            redirectAttributes.addFlashAttribute("success", "Auction updated successfully");
+            return "redirect:/auction/my-auctions";
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/auction/my-auctions";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            List<Category> categories = categoryRepository.findAll();
+            model.addAttribute("categories", categories);
+            model.addAttribute("auctionId", id);
+            Auction auction = auctionService.getAuctionById(id);
+            model.addAttribute("auction", auction);
+            return "auction-edit";
+        } catch (IOException e) {
+            model.addAttribute("error", "Error uploading image: " + e.getMessage());
+            List<Category> categories = categoryRepository.findAll();
+            model.addAttribute("categories", categories);
+            model.addAttribute("auctionId", id);
+            Auction auction = auctionService.getAuctionById(id);
+            model.addAttribute("auction", auction);
+            return "auction-edit";
+        }
+    }
+    
+    @PostMapping("/auction/{id}/delete")
+    public String deleteAuction(@PathVariable("id") Long id,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            User seller = getCurrentUser();
+            auctionService.deleteAuction(id, seller);
+            redirectAttributes.addFlashAttribute("success", "Auction deleted successfully");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error deleting auction: " + e.getMessage());
+        }
+        return "redirect:/auction/my-auctions";
     }
 }
 
